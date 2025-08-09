@@ -1,0 +1,79 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# SQLite database files
+# Ignore all SQLite databases to prevent committing local DB state
+*.sqlite3
+*.sqlite
+*db.sqlite3
+
+# Django specific
+*.log
+local_settings.py
+/staticfiles/
+/media/
+
+# Migrations
+# Keep migration files, but ignore compiled caches
+*/migrations/__pycache__/
+
+# Test and coverage
+.htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.pytest_cache/
+
+# Type checkers
+.pyre/
+.mypy_cache/
+
+# Virtual environments
+.env
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
