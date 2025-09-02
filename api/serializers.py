@@ -33,7 +33,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
-    password= serializers.CharField(write_only= True, min_length=  8,
+    password= serializers.CharField(write_only= True, min_length= 8,
     validators= [validate_password], style= {'input_type': 'password'})
 
     class Meta:
