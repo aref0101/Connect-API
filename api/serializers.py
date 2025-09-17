@@ -15,7 +15,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    comments= CommentSerializer(many= True, read_only= True)
+    comments= CommentSerializer(many= True, read_only= True, source= 'comment_set')
     likes_count= serializers.IntegerField(source= 'liked_by.count', read_only= True)
     owner= serializers.ReadOnlyField(source= 'owner.username')
 
