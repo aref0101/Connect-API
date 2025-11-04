@@ -142,7 +142,7 @@ REST_FRAMEWORK= {'DEFAULT_AUTHENTICATION_CLASSES': [
 from datetime import timedelta
 
 SIMPLE_JWT= {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes= 60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours= 12),
     'REFRESH_TOKEN_LIFETIME': timedelta(days= 7),
 }
 
@@ -157,14 +157,4 @@ REST_FRAMEWORK.update({
         'anon': '10/minute',
         'user': '100/minute',
     },
-})
-
-
-# Versioning
-REST_FRAMEWORK.update({
-    'DEFAULT_VERSIONING_CLASS': 
-        'rest_framework.versioning.URLPathVersioning',
-    'DEFAULT_VERSION': '1.0',
-    'ALLOWED_VERSIONS': ['1.0', '2.0'],
-    'VERSION_PARAM': 'version',
 })

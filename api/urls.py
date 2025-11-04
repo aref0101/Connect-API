@@ -7,8 +7,9 @@ from rest_framework_simplejwt.views import (
 )
 
 router= DefaultRouter()
-router.register(r'posts', views.PostAPIViewSet)
+router.register(r'posts', views.PostAPIViewSet, basename= 'posts')
 router.register(r'comments', views.CommentViewSet)
+router.register(r'users', views.UserViewSet)
 
 
 urlpatterns= [
@@ -16,4 +17,5 @@ urlpatterns= [
     path('token/', TokenObtainPairView.as_view()),
     path('refresh/', TokenRefreshView.as_view()),
     path('', include(router.urls)),
+    path('following-posts/', views.FollowingPostList.as_view()),
 ]

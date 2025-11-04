@@ -1,6 +1,6 @@
 # SocialNetwork API
 
-A Django REST Framework–based web API for creating, viewing, editing, and deleting posts. Only the authenticated owner of a post is authorized to modify or delete it. The system includes user login and registration, JWT-based authentication, and a full suite of features such as, request throttling, API versioning, comment and like. (e.g., “Known issue: image field resets on update; planned fix in next version”),
+A Django REST Framework–based web API for creating, viewing, editing, and deleting posts. Only the authenticated owner of a post is authorized to modify or delete it. The system includes user login and registration, JWT-based authentication, and a full suite of features such as, request throttling, API versioning, comment, like, follow and a feed based on user followings (e.g., “Known issue: image field resets on update; planned fix in next version”),
 
 ---
 
@@ -18,6 +18,7 @@ User registration and login are implemented using JSON Web Tokens (JWT) via Simp
 - **API Niceties**   
   - **Commenting**: you can write comment for posts.
   - **Liking**: you can like and unlike posts.
+  - **Following**: you can follow and unfollow users.
   - **Throttling**: Prevents from hammering the API.  
   - **Versioning**: backward-incompatible changes require clear and structured communication.
 
