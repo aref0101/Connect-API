@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 User= get_user_model()
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count
+from django.db import transaction
 
 
 class PostAPIViewSet(ModelViewSet):
@@ -16,19 +17,16 @@ class PostAPIViewSet(ModelViewSet):
     permission_classes= [permissions.IsAuthenticated, IsOwnerOrReadOnly] 
 
     @action(detail= True, methods= ['post'], permission_classes= [permissions.IsAuthenticated])
-    def like(self, request, pk= None):
+    def togglelike(self, request, pk= None):
         post= self.get_object()
         user= request.user
-        post.liked_by.add(user)
-        return Response({'detail': 'liked', 'likes_count': post.liked_by.count()})
-
-    @action(detail= True, methods= ['post'], permission_classes= [permissions.IsAuthenticated])
-    def unlike(self, request, pk= None):
-        post= self.get_object()
-        user= request.user
-        post.liked_by.remove(user)
-        return Response({'detail': 'unliked', 'likes_count': post.liked_by.count()})
-
+        if post.liked_by.filter(pk= user.pk).exists():
+            post.liked_by.remove(user)
+            return Response({'detail': 'unliked', 'likes_count': post.liked_by.count()}, status= status.HTTP_200_OK)
+        else:
+            post.liked_by.add(user)
+            return Response({'detail': 'liked', 'likes_count': post.liked_by.count()}, status= status.HTTP_201_CREATED)
+        
     def perform_create(self, serializer):
         serializer.save(owner= self.request.user)
 
@@ -45,19 +43,16 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class= CommentSerializer
     permission_classes= [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
-    @action(detail= True, methods= ['post'], permission_classes= [permissions.IsAuthenticated])
-    def like(self, request, pk= None):
-        comment= self.get_object()
+    @action(detail= True, methods= ['post'], permission_classes= [IsAuthenticated])
+    def togglelike(self, request, pk= None):
         user= request.user
-        comment.liked_by.add(user)
-        return Response({'detail': 'liked', 'likes_count': comment.liked_by.count()})
-    
-    @action(detail= True, methods= ['post'], permission_classes= [permissions.IsAuthenticated])
-    def unlike(self, request, pk= None):
         comment= self.get_object()
-        user= request.user
-        comment.liked_by.remove(user)
-        return Response({'detail': 'unliked', 'likes_count': comment.liked_by.count()})
+        if comment.liked_by.filter(pk= user.pk).exists():
+            comment.liked_by.remove(user)
+            return Response({'detail': 'unliked', 'likes_count': comment.liked_by.count()}, status= status.HTTP_200_OK)
+        else:
+            comment.liked_by.add(user)
+            return Response({'detail': 'liked', 'likes_count': comment.liked_by.count()}, status= status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
         serializer.save(owner= self.request.user)
@@ -87,24 +82,17 @@ class UserViewSet(ModelViewSet):
         return Response(serializer.data)
     
     @action(detail= True, methods= ['post'], permission_classes= [IsAuthenticated])
-    def follow(self, request, pk= None):
-        target= self.get_object()
+    def togglefollow(self, request, pk= None):
         user= request.user
+        target= self.get_object()
         if user== target:
             return Response({'detail': 'you cannot follow yourself'}, status= status.HTTP_400_BAD_REQUEST)
-        followed_obj, created= Follow.objects.get_or_create(follower= user, following= target)
-        if created:
-            return Response({'detail': 'followed'}, status= status.HTTP_201_CREATED)
-        return Response({'detail': 'already following'}, status= status.HTTP_200_OK)
-    
-    @action(detail= True, methods= ['post'], permission_classes= [IsAuthenticated])
-    def unfollow(self, request, pk= None):
-        target= self.get_object()
-        user= request.user
-        deleted, _ = Follow.objects.filter(follower= user, following= target).delete()
-        if deleted:
-            return Response({'detail': 'unfollowed'}, status= status.HTTP_200_OK)
-        return Response({'detail': 'not following'}, status= status.HTTP_400_BAD_REQUEST)
+        elif Follow.objects.filter(follower= user, following= target).exists():
+            Follow.objects.filter(follower= user, following= target).delete()
+            return Response({'detail': 'unfollowed'}, status= status.HTTP_201_CREATED)
+        else:
+            Follow.objects.create(follower= user, following= target)
+            return Response({'detail': 'followed'}, status= status.HTTP_200_OK)
     
 
 class FollowingPostList(generics.ListAPIView):
