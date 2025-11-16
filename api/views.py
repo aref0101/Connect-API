@@ -89,10 +89,10 @@ class UserViewSet(ModelViewSet):
             return Response({'detail': 'you cannot follow yourself'}, status= status.HTTP_400_BAD_REQUEST)
         elif Follow.objects.filter(follower= user, following= target).exists():
             Follow.objects.filter(follower= user, following= target).delete()
-            return Response({'detail': 'unfollowed'}, status= status.HTTP_201_CREATED)
+            return Response({'detail': 'unfollowed'}, status= status.HTTP_200_OK)
         else:
             Follow.objects.create(follower= user, following= target)
-            return Response({'detail': 'followed'}, status= status.HTTP_200_OK)
+            return Response({'detail': 'followed'}, status= status.HTTP_201_CREATED)
     
 
 class FollowingPostList(generics.ListAPIView):
