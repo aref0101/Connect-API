@@ -46,7 +46,7 @@ class PostViewSet(ModelViewSet):
         return Post.objects.all().annotate(comments_count= Count('comments')).order_by('-created')
     
 
-class BookmarkAPIView(generics.ListAPIView, generics.RetrieveAPIView):
+class BookmarkAPIView(generics.ListAPIView):
     serializer_class= PostSerializer
     permission_classes= [IsAuthenticated]
 
