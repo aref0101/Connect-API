@@ -1,26 +1,19 @@
 # SocialNetwork API
 
-A Django REST Framework–based web API with CRUD operation. Only the authenticated owner of a post or comment is authorized to modify or delete it. The system includes user login and registration, JWT-based authentication, and a full suite of features such as, request throttling, API versioning, comment, like, follow and a feed based on user followings (e.g., “Known issue: image field resets on update; planned fix in next version”),
+A Django REST Framework–based web API. Only the authenticated owner of a post or comment is authorized to modify or delete it. The system includes user login and registration, JWT-based authentication, and a full suite of features such as comment, like, bookmark, follow, a feed based on user followings and list of users following and followers (e.g., “Known issue: image field resets on update; planned fix in next version”),
 
 ---
 
 ## Features
 
 - **User Auth**  
-User registration and login are implemented using JSON Web Tokens (JWT) via Simple JWT, with full support for token refresh and rotation to ensure secure and seamless authentication.
-
-- **Posts CRUD**  
-  - **Create** a new Post  
-  - **Read** (list/detail) your posts  
-  - **Update** or **Partial Update** only if you’re the owner  
-  - **Delete** only if you’re the owner  
+User registration and login are implemented using JSON Web Tokens (JWT) via Simple JWT, with full support for token refresh and rotation to ensure secure and seamless authentication. 
 
 - **API Niceties**   
   - **Commenting**: you can write comment for posts.
   - **Liking**: you can like and unlike posts.
   - **Following**: you can follow and unfollow users.
-  - **Throttling**: Prevents from hammering the API.  
-  - **Versioning**: backward-incompatible changes require clear and structured communication.
+  - **Bookmarking**: you can bookmark (save) anyone's posts.
 
 ---
 
@@ -52,11 +45,11 @@ source .venv/bin/activate      # macOS/Linux
 pip install -r requirements.txt
 
 # 4. Configure environment variables
-SECRET_KEY=your-django-secret-key-avoid-using-‘django-insecure’
+SECRET_KEY= your-secret-key
 
-DEBUG=True   # switch to False in prod
+DEBUG= True   # switch to False in production
 
-ALLOWED_HOSTS=127.0.0.1,localhost
+ALLOWED_HOSTS= 127.0.0.1, localhost
 
 # 5. python manage.py migrate
 python manage.py migrate

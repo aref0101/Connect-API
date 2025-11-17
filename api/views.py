@@ -1,6 +1,6 @@
 from rest_framework.viewsets import ModelViewSet
 from .models import Post, Comment, Follow
-from .serializers import PostSerializer, UserRegisterSerializer, CommentSerializer, UserSerializer
+from .serializers import PostSerializer, UserRegisterSerializer, CommentSerializer, CommentCreateSerializer, UserSerializer
 from rest_framework import generics, permissions, viewsets, status
 from .customPermission import IsOwnerOrReadOnly, IsMeOrReadOnly
 from rest_framework.response import Response
@@ -9,10 +9,11 @@ from django.contrib.auth import get_user_model
 User= get_user_model()
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count
+from django.shortcuts import get_object_or_404
 from django.db import transaction
 
 
-class PostAPIViewSet(ModelViewSet):
+class PostViewSet(ModelViewSet):
     serializer_class= PostSerializer
     permission_classes= [permissions.IsAuthenticated, IsOwnerOrReadOnly] 
 
@@ -26,12 +27,31 @@ class PostAPIViewSet(ModelViewSet):
         else:
             post.liked_by.add(user)
             return Response({'detail': 'liked', 'likes_count': post.liked_by.count()}, status= status.HTTP_201_CREATED)
+
+    @action(detail= True, methods= ['post'], permission_classes= [IsAuthenticated])
+    def bookmark(self, request, pk= None):
+        user= request.user
+        target= self.get_object()
+        if target.bookmarked_by.filter(pk= user.pk).exists():
+            target.bookmarked_by.remove(user)
+            return Response({'detail': 'unbookmarked'}, status= status.HTTP_200_OK)
+        else:
+            target.bookmarked_by.add(user)
+            return Response({'detail': 'bookmarked'}, status= status.HTTP_201_CREATED)
         
     def perform_create(self, serializer):
         serializer.save(owner= self.request.user)
 
     def get_queryset(self):
         return Post.objects.all().annotate(comments_count= Count('comments')).order_by('-created')
+    
+
+class BookmarkAPIView(generics.ListAPIView, generics.RetrieveAPIView):
+    serializer_class= PostSerializer
+    permission_classes= [IsAuthenticated]
+
+    def get_queryset(self):
+        return Post.objects.filter(bookmarked_by= self.request.user)
 
 
 class RegisterView(generics.CreateAPIView):

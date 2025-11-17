@@ -22,6 +22,7 @@ class Post(models.Model):
     text= models.TextField(blank= True, null= True)
     picture= models.ImageField(blank= True, null= True, upload_to= 'posts/')
     liked_by= models.ManyToManyField(settings.AUTH_USER_MODEL, related_name= 'liked_posts', blank= True)
+    bookmarked_by= models.ManyToManyField(settings.AUTH_USER_MODEL, related_name= 'bookmarked_posts', blank= True)
     created= models.DateTimeField(auto_now_add= True)
 
     def clean(self):

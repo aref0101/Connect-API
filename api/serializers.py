@@ -13,7 +13,12 @@ class CommentSerializer(ModelSerializer):
     class Meta:
         model= Comment
         fields= ('id', 'post', 'owner_username', 'text', 'likes_count', 'created')
-        read_only_fields= ('id', 'owner_username', 'created')
+
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= Comment
+        fields= ('id', 'text')
 
 
 class UserSerializer(ModelSerializer):
@@ -45,7 +50,7 @@ class PostSerializer(ModelSerializer):
     class Meta:
         model= Post
         fields= ['id', 'owner_username', 'is_following', 'picture', 'text', 'likes_count', 'comments_count', 'created']
-        read_only_fields= ['id', 'owner', 'created', 'likes_count', 'comments_count']
+        read_only_fields= ['id', 'owner', 'created', 'likes_count', 'comments_count', 'comments']
 
     def validate(self, attrs):
         text= attrs.get('text', '').strip()
