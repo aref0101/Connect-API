@@ -1,56 +1,41 @@
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 from .models import CustomUser, Post, Comment
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.validators import RegexValidator
 User= get_user_model()
 
 
 class CommentSerializer(ModelSerializer):
-    owner_username= serializers.ReadOnlyField(source= 'owner.username', read_only= True)
-    likes_count= serializers.IntegerField(source= 'liked_by.count', read_only= True)
+    owner_username= serializers.ReadOnlyField(source= 'owner.username')
+    likes_count= serializers.IntegerField(read_only= True)
 
     class Meta:
         model= Comment
-        fields= ('id', 'post', 'owner_username', 'text', 'likes_count', 'created')
-
-
-class CommentCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model= Comment
-        fields= ('id', 'text')
+        fields= ('id', 'owner_username', 'text', 'likes_count', 'created_at')
+        read_only_fields= ('id', 'created_at')
 
 
 class UserSerializer(ModelSerializer):
-    is_following= serializers.SerializerMethodField()
+    is_following= serializers.BooleanField()
 
     class Meta:
         model= User
         fields= ('id', 'name', 'username', 'bio', 'is_following')
-    
-    def get_is_following(self, obj):
-        request= self.context.get('request')
-        if not request:
-            return False
-        return obj.followed_by.filter(follower= request.user).exists()
+        read_only_fields= ('id', 'is_following')
 
 
 class PostSerializer(ModelSerializer):
-    owner_username= serializers.CharField(source= 'owner.username') and serializers.ReadOnlyField(source= 'owner.username')
-    is_following= serializers.SerializerMethodField()
-    likes_count= serializers.IntegerField(source= 'liked_by.count', read_only= True)
+    owner_username= serializers.ReadOnlyField(source= 'owner.username')
+    is_following= serializers.BooleanField(read_only= True)
+    likes_count= serializers.IntegerField(read_only= True)
     comments_count= serializers.IntegerField(read_only= True)
-
-    def get_is_following(self, obj):
-        request= self.context.get('request')
-        if not request:
-            return False
-        return obj.owner.followed_by.filter(follower= request.user).exists()
 
     class Meta:
         model= Post
-        fields= ['id', 'owner_username', 'is_following', 'picture', 'text', 'likes_count', 'comments_count', 'created']
-        read_only_fields= ['id', 'owner', 'created', 'likes_count', 'comments_count', 'comments']
+        fields= ('id', 'owner_username', 'is_following', 'picture', 'text', 'likes_count', 'comments_count', 'created_at')
+        read_only_fields= ('id', 'owner_username', 'created_at')
 
     def validate(self, attrs):
         text= attrs.get('text', '').strip()
@@ -59,8 +44,13 @@ class PostSerializer(ModelSerializer):
             raise serializers.ValidationError('Post can not be empty')
         return attrs
 
+no_spaces_validator= RegexValidator(
+    regex= r'^[\w.@+-]+$',
+    message= 'Username can only contain letters, numbers and @/./+/-/_ characters (no spaces).'
+)
 
 class UserRegisterSerializer(ModelSerializer):
+    username= serializers.CharField(validators= [no_spaces_validator])
     password= serializers.CharField(write_only= True, min_length= 8,
     validators= [validate_password], style= {'input_type': 'password'})
 
