@@ -1,6 +1,6 @@
-# SocialNetwork API
+# social-network API
 
-A Django REST Framework–based web API. Only the authenticated owner of a post or comment is authorized to modify or delete it. The system includes user login and registration, JWT-based authentication, and a full suite of features such as comment, like, bookmark, follow, a feed based on user followings and list of users following and followers (e.g., “Known issue: image field resets on update; planned fix in next version”),
+A Django REST Framework–based social platform API with full user authentication (JWT), permissions and secure ownership validation for content CRUD. Features include posting, commenting, liking, following/followers system, feed generation based on followed users, bookmark system and cursor pagination. Also reduced database queries significantly by applying select_related, annotate (Count, Exists) and ensuring proper index usage.
 
 ---
 

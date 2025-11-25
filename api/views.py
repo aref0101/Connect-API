@@ -1,6 +1,6 @@
 from rest_framework.viewsets import ModelViewSet
 from .models import Post, Comment, Follow
-from .serializers import PostSerializer, UserRegisterSerializer, CommentSerializer, CommentCreateSerializer, UserSerializer
+from .serializers import PostSerializer, CommentSerializer, UserRegisterSerializer, UserSerializer
 from rest_framework import generics, permissions, viewsets, status
 from .customPermission import IsOwnerOrReadOnly, IsMeOrReadOnly
 from rest_framework.response import Response
@@ -8,14 +8,22 @@ from rest_framework.decorators import action
 from django.contrib.auth import get_user_model
 User= get_user_model()
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count
+from django.db.models import Count, Exists, OuterRef
+from rest_framework.pagination import CursorPagination
 from django.shortcuts import get_object_or_404
-from django.db import transaction
+from rest_framework.exceptions import NotFound
+
+
+class SocialPangination(CursorPagination):
+    page_size= 10
+    ordering= '-created_at'
+    cursor_query_param= 'cursor'
 
 
 class PostViewSet(ModelViewSet):
     serializer_class= PostSerializer
     permission_classes= [permissions.IsAuthenticated, IsOwnerOrReadOnly] 
+    pagination_class= SocialPangination
 
     @action(detail= True, methods= ['post'], permission_classes= [permissions.IsAuthenticated])
     def togglelike(self, request, pk= None):
@@ -41,47 +49,72 @@ class PostViewSet(ModelViewSet):
         
     def perform_create(self, serializer):
         serializer.save(owner= self.request.user)
-
+    
     def get_queryset(self):
-        return Post.objects.all().annotate(comments_count= Count('comments')).order_by('-created')
+        user= self.request.user
+        is_following_query= Follow.objects.filter(follower= user, following= OuterRef('owner'))
+
+        return Post.objects.all().select_related('owner').annotate(
+            is_following= Exists(is_following_query),
+            likes_count= Count('liked_by', distinct= True),
+            comments_count= Count('comments', distinct= True),
+        )
     
 
 class BookmarkAPIView(generics.ListAPIView):
     serializer_class= PostSerializer
     permission_classes= [IsAuthenticated]
+    pagination_class= SocialPangination
 
     def get_queryset(self):
-        return Post.objects.filter(bookmarked_by= self.request.user)
+        return Post.objects.select_related('owner').annotate(
+            likes_count= Count('liked_by', distinct= True),
+            comments_count= Count('comments', distinct= True)
+            ).filter(bookmarked_by= self.request.user)
 
 
 class RegisterView(generics.CreateAPIView):
     serializer_class= UserRegisterSerializer
 
 
-class CommentViewSet(viewsets.ModelViewSet):
-    queryset= Comment.objects.all().order_by('-created')
+class CommentViewSet(ModelViewSet):
     serializer_class= CommentSerializer
-    permission_classes= [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes= [IsAuthenticated, IsOwnerOrReadOnly]
+    pagination_class= SocialPangination
+
+    def get_queryset(self):
+        post_pk= self.kwargs.get('post_pk')
+        if post_pk is None:
+            return Comment.objects.none()
+        return Comment.objects.filter(post_id= post_pk).select_related('owner').annotate(likes_count= Count('liked_by'))
+    
+    def list(self, request, *args, **kwargs):
+        post_pk= self.kwargs.get('post_pk')
+        if not Post.objects.filter(pk= post_pk).exists():
+            raise NotFound("Post not found")
+        return super().list(request, *args, **kwargs)
+    
+    def perform_create(self, serializer):
+        post_pk= self.kwargs.get('post_pk')
+        post= get_object_or_404(Post, pk= post_pk)
+        serializer.save(owner= self.request.user, post= post)
 
     @action(detail= True, methods= ['post'], permission_classes= [IsAuthenticated])
-    def togglelike(self, request, pk= None):
+    def togglelike(self, request, pk= None, post_pk= None):
         user= request.user
-        comment= self.get_object()
-        if comment.liked_by.filter(pk= user.pk).exists():
-            comment.liked_by.remove(user)
-            return Response({'detail': 'unliked', 'likes_count': comment.liked_by.count()}, status= status.HTTP_200_OK)
+        target= self.get_object()
+        if target.liked_by.filter(pk= user.pk).exists():
+            target.liked_by.remove(user)
+            return Response({'detail': 'unliked', 'likes_count': target.liked_by.count()}, status= status.HTTP_200_OK)
         else:
-            comment.liked_by.add(user)
-            return Response({'detail': 'liked', 'likes_count': comment.liked_by.count()}, status= status.HTTP_201_CREATED)
-
-    def perform_create(self, serializer):
-        serializer.save(owner= self.request.user)
+            target.liked_by.add(user)
+            return Response({'detail': 'liked', 'likes_count': target.liked_by.count()}, status= status.HTTP_201_CREATED)
 
 
 class UserViewSet(ModelViewSet):
-    queryset= User.objects.all()
     serializer_class= UserSerializer
     permission_classes= [permissions.IsAuthenticated, IsMeOrReadOnly]
+    pagination_class= SocialPangination
     http_method_names= ['get', 'put', 'patch', 'post', 'head', 'options']
 
     def create(self, request, *args, **kwargs):
@@ -91,13 +124,27 @@ class UserViewSet(ModelViewSet):
     def followers(self, request, pk= None):
         target= self.get_object()
         qs= User.objects.filter(follows__following= target).distinct()
+        is_following_subquery= User.objects.filter(followed_by__follower= request.user, pk= OuterRef('pk'))
+        qs= qs.annotate(is_following= Exists(is_following_subquery))
+
+        page= self.paginate_queryset(qs)
+        if page is not None:
+            serializer= self.get_serializer(page, many= True)
+            return self.get_paginated_response(serializer.data)
         serializer= self.get_serializer(qs, many= True)
         return Response(serializer.data)
-    
+
     @action(detail= True, methods= ['get'], permission_classes= [IsAuthenticated])
     def following(self, request, pk= None):
         target= self.get_object()
         qs= User.objects.filter(followed_by__follower= target).distinct()
+        is_following_subquery= User.objects.filter(followed_by__follower= request.user, pk= OuterRef('pk'))
+        qs= qs.annotate(is_following= Exists(is_following_subquery))
+
+        page= self.paginate_queryset(qs)
+        if page is not None:
+            serializer= self.get_serializer(page, many= True)
+            return self.get_paginated_response(serializer.data)
         serializer= self.get_serializer(qs, many= True)
         return Response(serializer.data)
     
@@ -113,14 +160,22 @@ class UserViewSet(ModelViewSet):
         else:
             Follow.objects.create(follower= user, following= target)
             return Response({'detail': 'followed'}, status= status.HTTP_201_CREATED)
+        
+    def get_queryset(self):
+        user= self.request.user
+        is_following_query= Follow.objects.filter(follower= user, following= OuterRef('pk'))
+
+        return User.objects.annotate(
+            is_following= Exists(is_following_query)).all()
     
 
 class FollowingPostList(generics.ListAPIView):
     serializer_class= PostSerializer
     permission_classes= [IsAuthenticated]
+    pagination_class= SocialPangination
 
     def get_queryset(self):
         user= self.request.user
         following_ids= Follow.objects.filter(follower= user).values_list('following_id', flat= True)
-        qs= Post.objects.filter(owner_id__in= following_ids).order_by('-created')
+        qs= Post.objects.select_related('owner').annotate(likes_count= Count('liked_by', distinct= True), comments_count= Count('comments')).filter(owner_id__in= following_ids)
         return qs
