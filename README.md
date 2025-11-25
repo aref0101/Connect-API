@@ -1,6 +1,12 @@
 # social-network API
 
+<<<<<<< HEAD
 A Django REST Framework–based social platform API with full user authentication (JWT), permissions and secure ownership validation for content CRUD. Features include posting, commenting, liking, following/followers system, feed generation based on followed users, bookmark system and cursor pagination. Also reduced database queries significantly by applying select_related, annotate (Count, Exists) and ensuring proper index usage.
+=======
+A Django REST Framework–based social platform API with full user authentication (JWT), permissions and role-based access.
+Features include posting, commenting, liking, following/followers system, feed generation based on followed users, bookmark system
+and secure ownership validation for content CRUD.
+>>>>>>> 9ca258f3dd78d0b02411ac8824dba3ca762ec1ed
 
 ---
 
