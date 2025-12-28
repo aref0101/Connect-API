@@ -1,9 +1,11 @@
 from django.contrib import admin
-from .models import CustomUser, Post, Comment, Follow
+from .models import CustomUser, Post, Comment, Like, Follow, Block
 
 # Register your models here.
 
 admin.site.register(CustomUser)
 admin.site.register(Post)
 admin.site.register(Comment)
+admin.site.register(Like)
 admin.site.register(Follow)
+admin.site.register(Block)

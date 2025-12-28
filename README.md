@@ -1,6 +1,8 @@
 # social-network API
 
-A Django REST Framework–based social platform API with full user authentication (JWT), permissions and secure ownership validation for content CRUD. Features include posting, commenting, liking, following/followers system, feed generation based on followed users, bookmark system and cursor pagination. Also reduced database queries significantly by applying select_related, annotate (Count, Exists) and ensuring proper index usage.
+Developed a Django REST Framework–based social platform API with JWT authentication, fine-grained permissions, and secure ownership validation. 
+Implemented core social features including posts, comments, likes, block, follow/follower system, private accounts, feed generation based on followed users, bookmarks, and cursor pagination. 
+Optimized database performance by eliminating N+1 queries using select_related and ORM annotations (Count, Exists), and reduced query cost on like/follow operations through composite indexing and query-aware Django ORM design.
 
 ---
 
@@ -14,16 +16,18 @@ User registration and login are implemented using JSON Web Tokens (JWT) via Simp
   - **Liking**: you can like and unlike posts.
   - **Following**: you can follow and unfollow users.
   - **Bookmarking**: you can bookmark (save) anyone's posts.
+  - **Blocking**: blocked users don't access to your posts and its comments. 
+  - **Private account**: you are not allowed to view the posts and its comments of a private account or like and bookmark them, Unless you request to follow them and they accept it.
 
 ---
 
 ## Tech Stack
 
-- **Python 3.x**  
-- **Django 4.x**  
+- **Python**  
+- **Django**  
 - **Django REST Framework**  
 - **djangorestframework-simplejwt**  
-- **SQLite** 
+- **PostgreSQL** 
 
 ---
 

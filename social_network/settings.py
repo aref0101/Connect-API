@@ -160,7 +160,7 @@ REST_FRAMEWORK= {'DEFAULT_AUTHENTICATION_CLASSES': [
 from datetime import timedelta
 
 SIMPLE_JWT= {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours= 12),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours= 72),
     'REFRESH_TOKEN_LIFETIME': timedelta(days= 7),
 }
 
@@ -183,3 +183,7 @@ INTERNAL_IPS = [
     "127.0.0.1",
     # ...
 ]
+
+SILKY_PYTHON_PROFILER= True
+SILKY_AUTHENTICATION= True
+SILKY_AUTHORISATION= True
